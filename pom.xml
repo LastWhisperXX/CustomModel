@@ -7,6 +7,7 @@
     <groupId>org.example</groupId>
     <artifactId>custom-model</artifactId>
     <version>1.0</version>
+    <description>自定义工具,留存一些通用的工具类</description>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
