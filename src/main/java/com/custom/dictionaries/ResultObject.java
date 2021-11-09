@@ -1,8 +1,9 @@
 package com.custom.dictionaries;
 
 /**
- * ResultObject 响应体
+ * ResultObject
  *
+ * 响应体格式规范
  * @Author Sunset
  * @Date 2021-11-08 17:14
  * @Version 1.8
@@ -33,7 +34,9 @@ public class ResultObject {
     }
 
 
-
+    /**
+     * 建造者模式
+     */
     public static class Build{
 
         /**
