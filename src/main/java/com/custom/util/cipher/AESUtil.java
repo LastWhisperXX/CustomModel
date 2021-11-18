@@ -1,9 +1,14 @@
 package com.custom.util.cipher;
 
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
 /**
@@ -152,4 +157,65 @@ public class AESUtil {
         String decrypt = decrypt(encrypt, KEY);
         System.out.println("解密后：" + decrypt);
     }
+
+
+    /**
+     * 加密
+     * @param cipherText 明文
+     * @param secretKey 密钥
+     * @return 密文
+     * @throws Exception 异常
+     */
+    public static String encryptTypeCBC(String cipherText, String secretKey) throws Exception {
+        if (secretKey == null) {
+            System.out.print("Key为空null");
+            return null;
+        } else if (secretKey.length() < 16) {
+            System.out.print("Key长度小于16位");
+            return null;
+        } else {
+            Cipher cipher = custom(secretKey,1);
+            byte[] encrypted = cipher.doFinal(cipherText.getBytes());
+            return (new BASE64Encoder()).encode(encrypted);
+        }
+    }
+
+    /**
+     * 解密
+     * @param cipherText 密文
+     * @param secretKey 密钥
+     * @return 明文
+     * @throws Exception 异常
+     */
+    public static String decryptTypeCBC(String cipherText, String secretKey) throws Exception {
+        if (secretKey == null) {
+            return null;
+        } else if (secretKey.length() < 16) {
+            System.out.print("Key长度小于16位");
+            return null;
+        } else {
+            Cipher cipher = custom(secretKey,2);
+            byte[] encrypted = (new BASE64Decoder()).decodeBuffer(cipherText);
+            byte[] original = cipher.doFinal(encrypted);
+            return new String(original);
+        }
+    }
+
+    /**
+     * 提取共用量
+     * @param secretKey 密钥
+     * @param cipherType 密文操作
+     * @return 密文对象
+     * @throws Exception 异常
+     */
+    private static Cipher custom( String secretKey , int cipherType)throws Exception {
+        secretKey = secretKey.length() % 16 == 0 ? secretKey : secretKey.substring(0, 16);
+        byte[] raw = secretKey.getBytes(StandardCharsets.UTF_8);
+        SecretKeySpec sks = new SecretKeySpec(raw, "AES");
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        IvParameterSpec iv = new IvParameterSpec(secretKey.substring(0, 16).getBytes());
+        cipher.init(cipherType, sks, iv);
+        return cipher;
+    }
+
 }
