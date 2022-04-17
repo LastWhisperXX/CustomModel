@@ -3,219 +3,121 @@ package com.custom.util.cipher;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 /**
  * AESUtil
- * 
+ *
  * AES加密解密工具类
  * @Author Sunset
  * @Version 1.8
  */
 public class AESUtil {
-    /**
-     * 加密形式
-     */
-    private static final String KEY_AES = "AES";
 
     /**
-     * 加密形式
-     */
-    private static final String KEY_AES_CBC = "AES/CBC/PKCS5Padding";
-
-    /**
-     * 加密编码
-     */
-    private static final String DEFAULT_CHARSET = "UTF-8";
-
-    /**
-     * 加密
-     *
-     * @param data 需要加密的内容
-     * @param key 加密密码
+     * 加密字符串
+     * @param plainText 明文
+     * @param customKey 自定义密钥
      * @return 密文
      */
-    public static String encrypt(String data, String key) {
-        return doAES(data, key, Cipher.ENCRYPT_MODE);
+    public static String encodeCipher(String plainText, String customKey) {
+        return doCipher(plainText, customKey, Cipher.ENCRYPT_MODE);
     }
 
     /**
-     * 解密
-     *
-     * @param data 待解密内容
-     * @param key 解密密钥
-     * @return 明文
-     */
-    public static String decrypt(String data, String key) {
-        return doAES(data, key, Cipher.DECRYPT_MODE);
-    }
-
-    /**
-     * 加解密
-     *
-     * @param data 待处理数据
-     * @param key  密钥
-     * @param mode 加解密mode
-     * @return 已处理数据
-     */
-    private static String doAES(String data, String key, int mode) {
-        try {
-            if ("".equals(data) || "".equals(key) || data == null || key == null) {
-                return null;
-            }
-            //判断是加密还是解密
-            boolean encrypt = mode == Cipher.ENCRYPT_MODE;
-            byte[] content;
-            //true 加密内容 false 解密内容
-            if (encrypt) {
-                content = data.getBytes(DEFAULT_CHARSET);
-            } else {
-                content = parseHexStr2Byte(data);
-            }
-            //1.构造密钥生成器，指定为AES算法,不区分大小写
-            KeyGenerator kgen = KeyGenerator.getInstance(KEY_AES);
-            //2.根据ecnodeRules规则初始化密钥生成器
-            //生成一个128位的随机源,根据传入的字节数组
-            kgen.init(128, new SecureRandom(key.getBytes()));
-            //3.产生原始对称密钥
-            SecretKey secretKey = kgen.generateKey();
-            //4.获得原始对称密钥的字节数组
-            byte[] enCodeFormat = secretKey.getEncoded();
-            //5.根据字节数组生成AES密钥
-            SecretKeySpec keySpec = new SecretKeySpec(enCodeFormat, KEY_AES);
-            //6.根据指定算法AES自成密码器
-            Cipher cipher = Cipher.getInstance(KEY_AES);
-            //7.初始化密码器，第一个参数为加密(Encrypt_mode)或者解密解密(Decrypt_mode)操作，第二个参数为使用的KEY
-            cipher.init(mode, keySpec);
-            assert content != null;
-            byte[] result = cipher.doFinal(content);
-            if (encrypt) {
-                //将二进制转换成16进制
-                return parseByte2HexStr(result);
-            } else {
-                return new String(result, DEFAULT_CHARSET);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 将二进制转换成16进制
-     *
-     * @param buf 二进制字符串
-     * @return 16进制字符串
-     */
-    public static String parseByte2HexStr(byte[] buf) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : buf) {
-            String hex = Integer.toHexString(b & 0xFF);
-            if (hex.length() == 1) {
-                hex = '0' + hex;
-            }
-            sb.append(hex.toUpperCase());
-        }
-        return sb.toString();
-    }
-
-    /**
-     * 将16进制转换为二进制
-     *
-     * @param hexStr 16进制字符串
-     * @return 二进制字符串
-     */
-    public static byte[] parseHexStr2Byte(String hexStr) {
-        if (hexStr.length() < 1) {
-            return null;
-        }
-        byte[] result = new byte[hexStr.length() / 2];
-        for (int i = 0; i < hexStr.length() / 2; i++) {
-            int high = Integer.parseInt(hexStr.substring(i * 2, i * 2 + 1), 16);
-            int low = Integer.parseInt(hexStr.substring(i * 2 + 1, i * 2 + 2), 16);
-            result[i] = (byte) (high * 16 + low);
-        }
-        return result;
-    }
-
-    /**
-     * 运行测试
-     */
-    public static void runTest() {
-        String content = "{'repairPhone':'18547854787','customPhone':'12365478965','captchav':'58m7'}";
-        String KEY = "123456";
-        System.out.println("加密前：" + content);
-        System.out.println("加密密钥和解密密钥：" + KEY);
-        String encrypt = encrypt(content, KEY);
-        System.out.println("加密后：" + encrypt);
-        String decrypt = decrypt(encrypt, KEY);
-        System.out.println("解密后：" + decrypt);
-    }
-
-
-    /**
-     * 加密
-     * @param cipherText 明文
-     * @param secretKey 密钥
-     * @return 密文
-     * @throws Exception 异常
-     */
-    public static String encryptTypeCBC(String cipherText, String secretKey) throws Exception {
-        if (secretKey == null) {
-            System.out.print("Key为空null");
-            return null;
-        } else if (secretKey.length() < 16) {
-            System.out.print("Key长度小于16位");
-            return null;
-        } else {
-            Cipher cipher = custom(secretKey,1);
-            byte[] encrypted = cipher.doFinal(cipherText.getBytes());
-            return (new BASE64Encoder()).encode(encrypted);
-        }
-    }
-
-    /**
-     * 解密
+     * 解密字符串
      * @param cipherText 密文
-     * @param secretKey 密钥
+     * @param customKey 自定义密钥
      * @return 明文
-     * @throws Exception 异常
      */
-    public static String decryptTypeCBC(String cipherText, String secretKey) throws Exception {
-        if (secretKey == null) {
+    public static String decodeCipher(String cipherText, String customKey) {
+        return doCipher(cipherText, customKey, Cipher.DECRYPT_MODE);
+    }
+
+    /**
+     * 加解密函数(默认)
+     *
+     * @param contentText   待操作字符串
+     * @param customKey     自定义密钥
+     * @param operationMode 操作模式
+     * @return 处理后字符串
+     */
+    private static String doCipher(String contentText, String customKey , int operationMode){
+        //向量内容 加密操作与解密操作需要使用相同的向量
+        final String ivText = "?S0PTMtn&*O6iX+o";
+        return doCipher(contentText , customKey , ivText , operationMode);
+    }
+    /**
+     * 加解密函数(自定义向量)
+     *
+     * @param contentText   待操作字符串
+     * @param customKey     自定义密钥
+     * @param ivText        向量
+     * @param operationMode 操作模式
+     * @return 处理后字符串
+     */
+    private static String doCipher(String contentText, String customKey , String ivText, int operationMode) {
+        //加密算法
+        final String algorithm = "AES";
+        //转换形式声明
+        // 格式 “算法/模式/填充 ”
+        // 算法 AES / DES / DESede / RSA
+        // 模式 ECB（默认）电码本模式 / CBC 密码分组链接模式 / CFB模式 密码反馈模式 / OFB模式 输出反馈模式 / CTR模式 计算器模式
+        //   常用
+        //     ECB Y 不需要IV 简单、速度快、可并行 N 明文相同时 密文也相同 安全性相对较低
+        //     CBC Y 每次加密密钥不同,安全性较高 N 加密无法并行,相对影响运行速度
+        //     CTR Y 加解密并行 运行速度快 N 对IV要求严格,需要瞬时IV
+        // 填充 NoPadding(不填充) / PKCS5Padding (填充5) / PKCS7Padding (填充7 此填充无法直接使用，需要对JDK进行调整)
+        final String statement = "AES/CTR/PKCS5Padding";
+        //随机源长度
+        final int cipherLength = 256;
+        try {
+            //密钥生成器 String 算法声明
+            KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm);
+            //生成指定长度随机源 int 密钥长度 , SecureRandom 随机源
+            keyGenerator.init(cipherLength, new SecureRandom(customKey.getBytes(StandardCharsets.UTF_8)));
+            //生成对称密钥
+            SecretKey secretKey = keyGenerator.generateKey();
+            //生成AES密钥
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getEncoded(), algorithm);
+            //生成向量 byte 长度为16的字符串
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(ivText.getBytes(StandardCharsets.UTF_8));
+            //根据转换形式声明生成密码对象
+            Cipher cipher = Cipher.getInstance(statement);
+            //初始化密码对象确定操作模式 int 操作模式1加密 2解密
+            cipher.init(operationMode, secretKeySpec, ivParameterSpec);
+            //生成操作字节 加密将明文转为字节 解密将密文base64解密后转为字节
+            byte[] contentBytes = operationMode == 1 ? contentText.getBytes(StandardCharsets.UTF_8) : new BASE64Decoder().decodeBuffer(contentText);
+            //进行最终字节操作
+            byte[] cipherBytes = cipher.doFinal(contentBytes);
+            //返回字符串 加密将字节base64编码后返回 解密直接生成String对象返回
+            return operationMode == 1 ? new BASE64Encoder().encode(cipherBytes) : new String(cipherBytes);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IOException | IllegalBlockSizeException | BadPaddingException e) {
+            e.printStackTrace();
             return null;
-        } else if (secretKey.length() < 16) {
-            System.out.print("Key长度小于16位");
-            return null;
-        } else {
-            Cipher cipher = custom(secretKey,2);
-            byte[] encrypted = (new BASE64Decoder()).decodeBuffer(cipherText);
-            byte[] original = cipher.doFinal(encrypted);
-            return new String(original);
         }
     }
 
     /**
-     * 提取共用量
-     * @param secretKey 密钥
-     * @param cipherType 密文操作
-     * @return 密文对象
-     * @throws Exception 异常
+     * 工具demo
      */
-    private static Cipher custom( String secretKey , int cipherType)throws Exception {
-        secretKey = secretKey.length() % 16 == 0 ? secretKey : secretKey.substring(0, 16);
-        byte[] raw = secretKey.getBytes(StandardCharsets.UTF_8);
-        SecretKeySpec sks = new SecretKeySpec(raw, "AES");
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        IvParameterSpec iv = new IvParameterSpec(secretKey.substring(0, 16).getBytes());
-        cipher.init(cipherType, sks, iv);
-        return cipher;
+    public void aesDemo() {
+        String plainText = "一段用于测试的字符串_";
+        String customKey = "WIbY!k-r";
+        String cipherText = encodeCipher(plainText, customKey);
+        String decode = decodeCipher(cipherText, customKey);
+        System.out.println("原始字符串："+plainText);
+        System.out.println("自定义密钥："+customKey);
+        System.out.println("密文："+cipherText);
+        System.out.println("明文："+decode);
     }
 
 }
