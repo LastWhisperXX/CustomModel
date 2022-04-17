@@ -22,6 +22,27 @@ import java.security.SecureRandom;
  */
 public class AESUtil {
 
+
+    /**
+     * 加密字符串(默认)
+     * @param plainText 明文
+     * @return 密文
+     */
+    public static String encodeCipher(String plainText) {
+        String customKey = "VmoTug6w8EIn@BsO";
+        return doCipher(plainText, customKey, Cipher.ENCRYPT_MODE);
+    }
+
+    /**
+     * 解密字符串(默认)
+     * @param cipherText 密文
+     * @return 明文
+     */
+    public static String decodeCipher(String cipherText) {
+        String customKey = "VmoTug6w8EIn@BsO";
+        return doCipher(cipherText, customKey, Cipher.DECRYPT_MODE);
+    }
+
     /**
      * 加密字符串
      * @param plainText 明文
@@ -111,7 +132,7 @@ public class AESUtil {
      */
     public void aesDemo() {
         String plainText = "一段用于测试的字符串_";
-        String customKey = "WIbY!k-r";
+        String customKey = "C+3@x!Q40O3V%-6+";
         String cipherText = encodeCipher(plainText, customKey);
         String decode = decodeCipher(cipherText, customKey);
         System.out.println("原始字符串："+plainText);
